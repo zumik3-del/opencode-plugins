@@ -22,7 +22,7 @@ const PRIORITY_LABEL: Record<string, string> = {
 }
 
 const LABEL_WIDTH = 12
-const RULE_WIDTH = 84
+const RULE_WIDTH = 80
 
 export function TasksDialog(props: {
   baseUrl: () => string
@@ -203,8 +203,8 @@ export function TaskDetailDialog(props: { detail: TaskDetail }) {
   const comments = () => detail().comments ?? []
 
   return (
-    <box flexDirection="column">
-      <text fg={theme.text.action.primary.focused} attributes={TextAttributes.BOLD} wrapMode="none">
+    <box flexDirection="column" paddingLeft={2} paddingRight={2}>
+      <text fg={theme.text.feedback.warning.base} attributes={TextAttributes.BOLD} wrapMode="none">
         {`#${detail().id}  ${detail().title}`}
       </text>
 
