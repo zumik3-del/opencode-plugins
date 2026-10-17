@@ -88,8 +88,8 @@ export function TasksDialog(props: {
   const theme = context.theme
 
   return (
-    <box flexDirection="column">
-      <text fg={theme.text.muted}>
+    <box flexDirection="column" paddingLeft={2} paddingRight={2}>
+      <text fg={theme.text.muted} wrapMode="none">
         {`${props.project() || "(unresolved)"} · ${rows().length} task${rows().length === 1 ? "" : "s"} · ↑/↓ select · enter open · r refresh · esc close`}
       </text>
 
