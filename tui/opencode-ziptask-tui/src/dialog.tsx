@@ -46,8 +46,14 @@ export function TasksDialog(props: {
     () => ({ baseUrl: props.baseUrl(), project: props.project(), reload: reload() }),
     async (key) => {
       if (!key.project) return [] as TaskSummary[]
-      const results = await Promise.all(STATUSES.map((status) => listTasks(key.baseUrl, key.project, status)))
-      return results.flat()
+      // A slug that matches no ziptask project answers 400. Swallow it here so
+      // the resource stays out of its error state and the dialog keeps rendering.
+      try {
+        const results = await Promise.all(STATUSES.map((status) => listTasks(key.baseUrl, key.project, status)))
+        return results.flat()
+      } catch {
+        return [] as TaskSummary[]
+      }
     },
   )
 

@@ -28,16 +28,23 @@ export default Plugin.define({
       () => ({ baseUrl: baseUrl(), project: currentProject() }),
       async (key) => {
         if (!key.project) return 0
-        const results = await Promise.all(
-          COUNTER_STATUSES.map((status) => listTasks(key.baseUrl, key.project, status)),
-        )
-        return results.reduce((sum, tasks) => sum + tasks.length, 0)
+        // ziptask answers 400 for a slug that matches no project, which would
+        // otherwise put the resource into an error state and throw when the
+        // footer slot reads it.
+        try {
+          const results = await Promise.all(
+            COUNTER_STATUSES.map((status) => listTasks(key.baseUrl, key.project, status)),
+          )
+          return results.reduce((sum, tasks) => sum + tasks.length, 0)
+        } catch {
+          return 0
+        }
       },
     )
 
     const unregisterSlot = context.ui.slot({
       append: "prompt.footer.status",
-      render: () => <text fg={context.theme.text.muted}>tasks: {taskCount() ?? 0}</text>,
+      render: () => <text fg={context.theme.text.muted}>tasks: {taskCount.error ? 0 : (taskCount() ?? 0)}</text>,
     })
 
     // Safety net in case the location store is not reactive on its own.
