@@ -111,7 +111,7 @@ export function TasksDialog(props: {
       <scrollbox maxHeight={15} scrollbarOptions={{ visible: false }}>
         <Show
           when={rows().length > 0}
-          fallback={<text fg={theme.text.muted}>{tasks.error ? " Failed to load tasks" : " No tasks"}</text>}
+          fallback={<text fg={theme.text.muted}>{" No tasks"}</text>}
         >
           <For each={rows()}>
             {(task, index) => {

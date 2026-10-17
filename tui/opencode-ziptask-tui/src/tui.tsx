@@ -57,7 +57,7 @@ export default Plugin.define({
 
     const unregisterSlot = context.ui.slot({
       append: "prompt.footer.status",
-      render: () => <text fg={context.theme.text.muted}>tasks: {taskCount.error ? 0 : (taskCount() ?? 0)}</text>,
+      render: () => <text fg={context.theme.text.muted}>tasks: {taskCount() ?? 0}</text>,
     })
 
     // Safety net in case the location store is not reactive on its own.
