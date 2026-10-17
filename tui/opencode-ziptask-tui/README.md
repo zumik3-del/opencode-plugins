@@ -17,6 +17,11 @@ An example settings file is provided at `config/settings.example.json`.
 - `Ziptask: tasks` — load active tasks and show details
 - `Ziptask: settings` — edit base URL and project slug
 
+## UI
+
+- A compact `tasks: N` counter (non-terminal tasks) is appended to `prompt.footer.status`,
+  near the composer/subagent picker, and refreshed on the configured interval.
+
 ## Assumed ziptask HTTP API
 
 The plugin currently assumes these endpoints exist (to be added to ziptask later):

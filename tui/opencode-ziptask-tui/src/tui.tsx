@@ -1,4 +1,5 @@
 import { Plugin } from "@opencode/plugin/tui"
+import { createSignal } from "solid-js"
 import { DEFAULT_SETTINGS, type ZiptaskSettings } from "./config"
 import { getTask, listTasks, type TaskSummary } from "./data"
 
@@ -8,6 +9,29 @@ export default Plugin.define({
     const [settings, updateSettings] = context.storage.store<ZiptaskSettings>("ziptask", {
       initial: DEFAULT_SETTINGS,
     })
+
+    const [taskCount, setTaskCount] = createSignal(0)
+
+    async function refreshTaskCount() {
+      try {
+        const { baseUrl, project } = settings()
+        const statuses = ["queued", "in_progress", "review", "failed", "blocked"]
+        const results = await Promise.all(statuses.map((status) => listTasks(baseUrl, project, status)))
+        setTaskCount(results.reduce((sum, tasks) => sum + tasks.length, 0))
+      } catch {
+        setTaskCount(0)
+      }
+    }
+
+    const unregisterSlot = context.ui.slot({
+      append: "prompt.footer.status",
+      render: () => <text fg={context.theme.text.muted}>tasks: {taskCount()}</text>,
+    })
+
+    const countTimer = setInterval(() => {
+      void refreshTaskCount()
+    }, settings().refreshMs || 15000)
+    void refreshTaskCount()
 
     async function loadActiveTasks(): Promise<TaskSummary[]> {
       const { baseUrl, project } = settings()
@@ -97,6 +121,9 @@ export default Plugin.define({
 
     context.ui.toast.show({ message: "Ziptask TUI plugin loaded", variant: "success" })
 
-    return () => {}
+    return () => {
+      clearInterval(countTimer)
+      unregisterSlot()
+    }
   },
 })
