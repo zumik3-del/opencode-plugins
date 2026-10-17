@@ -21,8 +21,12 @@ const PRIORITY_LABEL: Record<string, string> = {
   p3: "P3",
 }
 
-const LABEL_WIDTH = 12
-const RULE_WIDTH = 80
+// "large" is the dialog width the plugin opens with (medium 60, large 88,
+// xlarge 116). Rules span the padded content width so they line up with the
+// text edge rather than stopping short.
+const DIALOG_WIDTH = 88
+const H_PADDING = 2
+const RULE_WIDTH = DIALOG_WIDTH - H_PADDING * 2
 
 export function TasksDialog(props: {
   baseUrl: () => string
@@ -88,7 +92,7 @@ export function TasksDialog(props: {
   const theme = context.theme
 
   return (
-    <box flexDirection="column" paddingLeft={2} paddingRight={2}>
+    <box flexDirection="column" paddingLeft={H_PADDING} paddingRight={H_PADDING}>
       <text fg={theme.text.muted} wrapMode="none">
         {`${props.project() || "(unresolved)"} · ${rows().length} task${rows().length === 1 ? "" : "s"} · ↑/↓ select · enter open · r refresh · esc close`}
       </text>
@@ -193,17 +197,20 @@ export function TaskDetailDialog(props: { detail: TaskDetail }) {
     ],
   }))
 
-  const meta = () => [
-    ["status", STATUS_LABEL[detail().status] ?? detail().status],
-    ["priority", (PRIORITY_LABEL[detail().priority] ?? detail().priority).toUpperCase()],
-    ["project", detail().project ?? "(none)"],
-    ["blocked_by", detail().blocked_by.length ? detail().blocked_by.join(", ") : "—"],
+  // Four fields packed onto two rows so the metadata block stays compact.
+  const metaLines = () => [
+    [
+      ["status", STATUS_LABEL[detail().status] ?? detail().status],
+      ["priority", (PRIORITY_LABEL[detail().priority] ?? detail().priority).toUpperCase()],
+      ["project", detail().project ?? "(none)"],
+    ],
+    [["blocked_by", detail().blocked_by.length ? detail().blocked_by.join(", ") : "—"]],
   ] as const
 
   const comments = () => detail().comments ?? []
 
   return (
-    <box flexDirection="column" paddingLeft={2} paddingRight={2}>
+    <box flexDirection="column" paddingLeft={H_PADDING} paddingRight={H_PADDING}>
       <text fg={theme.text.feedback.warning.base} attributes={TextAttributes.BOLD} wrapMode="none">
         {`#${detail().id}  ${detail().title}`}
       </text>
@@ -212,13 +219,19 @@ export function TaskDetailDialog(props: { detail: TaskDetail }) {
         {"─".repeat(RULE_WIDTH)}
       </text>
 
-      <For each={meta()}>
-        {([label, value]) => (
+      <For each={metaLines()}>
+        {(pairs) => (
           <box flexDirection="row">
-            <text fg={theme.text.muted}>{label.padEnd(LABEL_WIDTH)}</text>
-            <text fg={theme.text.base} wrapMode="none">
-              {value}
-            </text>
+            <For each={pairs}>
+              {([label, value], index) => (
+                <box flexDirection="row">
+                  <text fg={theme.text.muted}>{`${index() > 0 ? " · " : ""}${label} `}</text>
+                  <text fg={theme.text.base} wrapMode="none">
+                    {value}
+                  </text>
+                </box>
+              )}
+            </For>
           </box>
         )}
       </For>
