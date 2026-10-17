@@ -28,6 +28,11 @@ const DIALOG_WIDTH = 88
 const H_PADDING = 2
 const RULE_WIDTH = DIALOG_WIDTH - H_PADDING * 2
 
+// Metadata grid: label column plus value column, so the second field of each
+// row starts at the same offset.
+const META_LABEL_WIDTH = 12
+const META_VALUE_WIDTH = 22
+
 export function TasksDialog(props: {
   baseUrl: () => string
   project: () => string
@@ -197,15 +202,19 @@ export function TaskDetailDialog(props: { detail: TaskDetail }) {
     ],
   }))
 
-  // Four fields packed onto two rows so the metadata block stays compact.
-  const metaLines = () => [
+  // Two fields per row in a fixed two-column grid, so the second column starts
+  // at the same offset on both rows and the labels stay vertically aligned.
+  const metaRows = () =>
     [
-      ["status", STATUS_LABEL[detail().status] ?? detail().status],
-      ["priority", (PRIORITY_LABEL[detail().priority] ?? detail().priority).toUpperCase()],
-      ["project", detail().project ?? "(none)"],
-    ],
-    [["blocked_by", detail().blocked_by.length ? detail().blocked_by.join(", ") : "—"]],
-  ] as const
+      [
+        ["status", STATUS_LABEL[detail().status] ?? detail().status],
+        ["priority", (PRIORITY_LABEL[detail().priority] ?? detail().priority).toUpperCase()],
+      ],
+      [
+        ["project", detail().project ?? "(none)"],
+        ["blocked_by", detail().blocked_by.length ? detail().blocked_by.join(", ") : "—"],
+      ],
+    ] as const
 
   const comments = () => detail().comments ?? []
 
@@ -219,13 +228,13 @@ export function TaskDetailDialog(props: { detail: TaskDetail }) {
         {"─".repeat(RULE_WIDTH)}
       </text>
 
-      <For each={metaLines()}>
-        {(pairs) => (
+      <For each={metaRows()}>
+        {(columns) => (
           <box flexDirection="row">
-            <For each={pairs}>
+            <For each={columns}>
               {([label, value], index) => (
-                <box flexDirection="row">
-                  <text fg={theme.text.muted}>{`${index() > 0 ? " · " : ""}${label} `}</text>
+                <box flexDirection="row" width={index() === 0 ? META_LABEL_WIDTH + META_VALUE_WIDTH : undefined}>
+                  <text fg={theme.text.muted}>{`${label} `.padEnd(META_LABEL_WIDTH)}</text>
                   <text fg={theme.text.base} wrapMode="none">
                     {value}
                   </text>
