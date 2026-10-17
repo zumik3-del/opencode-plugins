@@ -1,10 +1,8 @@
 import { Plugin } from "@opencode/plugin/tui"
-import { createSignal, Show } from "solid-js"
+import { createSignal } from "solid-js"
 import { DEFAULT_SETTINGS, projectFromDirectory, type ZiptaskSettings } from "./config"
 import { getTask, listTasks, type TaskSummary } from "./data"
-import { TasksPanel } from "./panel"
-
-const PANEL_NAME = "ziptask.tasks"
+import { TasksDialog } from "./dialog"
 
 export default Plugin.define({
   id: "ziptask.tui",
@@ -38,14 +36,22 @@ export default Plugin.define({
       render: () => <text fg={context.theme.text.muted}>tasks: {taskCount()}</text>,
     })
 
-    const unregisterPanel = context.ui.slot({
-      append: "session.panel",
-      render: (panel) => (
-        <Show when={panel.name === PANEL_NAME}>
-          <TasksPanel panel={panel} baseUrl={baseUrl} project={currentProject} />
-        </Show>
-      ),
-    })
+    // The host pushes the "modal" input mode while a dialog is open, so the
+    // dialog owns the keyboard until it closes.
+    const [tasksOpen, setTasksOpen] = createSignal(false)
+
+    function toggleTasksDialog() {
+      if (tasksOpen()) {
+        context.ui.dialog.clear()
+        return
+      }
+      setTasksOpen(true)
+      context.ui.dialog.set({ size: "large", centered: true })
+      context.ui.dialog.show(
+        () => <TasksDialog baseUrl={baseUrl} project={currentProject} />,
+        () => setTasksOpen(false),
+      )
+    }
 
     const countTimer = setInterval(() => {
       void refreshTaskCount()
@@ -64,15 +70,12 @@ export default Plugin.define({
       mode: "global",
       commands: [
         {
-          id: "ziptask.panel",
-          title: "Ziptask: tasks panel",
+          id: "ziptask.dialog",
+          title: "Ziptask: tasks",
           group: "Ziptask",
           palette: true,
           bind: "ctrl+down",
-          run: () => {
-            if (context.ui.panel.current()?.name === PANEL_NAME) context.ui.panel.close()
-            else context.ui.panel.open(PANEL_NAME)
-          },
+          run: () => toggleTasksDialog(),
         },
         {
           id: "ziptask.tasks",
@@ -150,7 +153,6 @@ export default Plugin.define({
     return () => {
       clearInterval(countTimer)
       unregisterSlot()
-      unregisterPanel()
     }
   },
 })
