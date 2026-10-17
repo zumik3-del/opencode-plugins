@@ -14,7 +14,7 @@ An example settings file is provided at `config/settings.example.json`.
 
 ## Commands
 
-- `Ziptask: tasks` — show current settings (placeholder; task list coming next)
+- `Ziptask: tasks` — load active tasks and show details
 - `Ziptask: settings` — edit base URL and project slug
 
 ## Assumed ziptask HTTP API
