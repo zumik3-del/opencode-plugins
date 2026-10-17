@@ -2,7 +2,7 @@ import { Plugin } from "@opencode/plugin/tui"
 import { createSignal } from "solid-js"
 import { DEFAULT_SETTINGS, projectFromDirectory, type ZiptaskSettings } from "./config"
 import { getTask, listTasks, type TaskSummary } from "./data"
-import { TasksDialog } from "./dialog"
+import { TasksDialog, TaskDetailDialog } from "./dialog"
 
 export default Plugin.define({
   id: "ziptask.tui",
@@ -40,14 +40,10 @@ export default Plugin.define({
     // dialog owns the keyboard until it closes.
     const [tasksOpen, setTasksOpen] = createSignal(false)
 
-    function toggleTasksDialog() {
-      if (tasksOpen()) {
-        context.ui.dialog.clear()
-        return
-      }
+    function openTasksDialog() {
       setTasksOpen(true)
       context.ui.dialog.show(
-        () => <TasksDialog baseUrl={baseUrl} project={currentProject} />,
+        () => <TasksDialog baseUrl={baseUrl} project={currentProject} onPick={openTaskDetail} />,
         () => setTasksOpen(false),
       )
       // Must come after show(): the host's replace() resets size to "medium" and
@@ -55,6 +51,35 @@ export default Plugin.define({
       // The host only offers three widths — medium 60, large 88, xlarge 116 —
       // so "large" (about 24% narrower than xlarge) is the closest to -20%.
       context.ui.dialog.set({ size: "large", centered: true })
+    }
+
+    async function openTaskDetail(id: number) {
+      try {
+        const detail = await getTask(baseUrl(), id)
+        context.ui.dialog.show(
+          () => <TaskDetailDialog detail={detail} />,
+          () => {
+            // The host calls onClose before it pops the stack, so re-opening here
+            // would recurse. Defer until the stack is settled.
+            setTimeout(() => openTasksDialog(), 0)
+          },
+        )
+        context.ui.dialog.set({ size: "large", centered: true })
+      } catch (error) {
+        context.ui.toast.show({
+          title: "Ziptask",
+          message: error instanceof Error ? error.message : String(error),
+          variant: "error",
+        })
+      }
+    }
+
+    function toggleTasksDialog() {
+      if (tasksOpen()) {
+        context.ui.dialog.clear()
+        return
+      }
+      openTasksDialog()
     }
 
     const countTimer = setInterval(() => {

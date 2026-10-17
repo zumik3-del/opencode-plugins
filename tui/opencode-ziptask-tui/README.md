@@ -82,8 +82,11 @@ Requires the package to be published to npm first (`npm publish` from the plugin
   near the composer/subagent picker, and refreshed on the configured interval.
 - **Ctrl+Down** opens a centered modal dialog listing non-terminal tasks with their status
   and priority. Inside it: `↑`/`↓` (or `k`/`j`) select, `enter` opens the task, `r` reloads,
-  `esc` closes, and clicking a row opens it too. The detail dialog shows the title, status,
-  priority, project, blocked-by, description, and comments.
+  `esc` closes, and clicking a row opens it too. Closing a task returns to the list.
+- Opening a task shows a **detail dialog**: the title, a rule, the metadata block (`status`,
+  `priority`, `project`, `blocked_by` as muted label/value pairs), another rule, then the
+  description and comments in a scroll region. Scroll with `↑`/`↓`, `pgup`/`pgdn`, or the
+  mouse wheel; `enter`/`q`/`esc` close it.
 
 ## Assumed ziptask HTTP API
 
