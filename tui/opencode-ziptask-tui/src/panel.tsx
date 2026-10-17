@@ -1,6 +1,7 @@
+import { TextAttributes } from "@opentui/core"
 import { usePlugin } from "@opencode/plugin/tui"
 import type { PanelInput } from "@opencode/plugin/tui/context"
-import { createMemo, createResource, createSignal, For, Show } from "solid-js"
+import { createResource, createSignal, For, Show } from "solid-js"
 import { getTask, listTasks, type TaskSummary } from "./data"
 
 // Non-terminal statuses, in display order.
@@ -111,46 +112,50 @@ export function TasksPanel(props: {
   }))
 
   const theme = context.theme
-  const project = createMemo(() => props.project())
 
   return (
-    <box flexDirection="column" flexGrow={1} paddingLeft={1}>
-      <Show when={project()} fallback={<text fg={theme.text.muted}>project could not be resolved from the directory</text>}>
-        <text fg={theme.text.muted}>
-          {project()} · {rows().length} task{rows().length === 1 ? "" : "s"} · ↑/↓ select · enter open · r refresh ·
-          esc close
-        </text>
-      </Show>
-
-      <Show when={tasks.error}>
-        <text fg={theme.text.feedback.error}>Failed to load tasks</text>
-      </Show>
-
-      <Show when={!tasks.loading && !tasks.error && rows().length === 0}>
-        <text fg={theme.text.muted}>No non-terminal tasks</text>
-      </Show>
-
-      <scrollbox flexGrow={1} scrollbarOptions={{ visible: false }}>
-        <box flexDirection="column">
-          <For each={rows()}>
-            {(task, index) => (
+    <scrollbox scrollbarOptions={{ visible: false }} maxHeight={5}>
+      <Show
+        when={rows().length > 0}
+        fallback={
+          <text fg={theme.text.muted}>
+            {tasks.error ? " Failed to load tasks" : " No tasks"}
+          </text>
+        }
+      >
+        <For each={rows()}>
+          {(task, index) => {
+            const isSelected = () => index() === selected()
+            return (
               <box
                 flexDirection="row"
                 paddingLeft={1}
-                backgroundColor={index() === selected() ? theme.background.raised.high : undefined}
-                onMouseDown={() => {
+                paddingRight={1}
+                backgroundColor={
+                  isSelected()
+                    ? theme.background.action.primary.focused
+                    : theme.background.action.primary.base
+                }
+                onMouseMove={() => setSelected(index())}
+                onMouseUp={() => {
                   setSelected(index())
                   void openSelected()
                 }}
               >
-                <text fg={theme.text.muted}> {(STATUS_LABEL[task.status] ?? task.status).padEnd(11)} </text>
-                <text fg={theme.text.muted}>{(PRIORITY_LABEL[task.priority] ?? task.priority).padEnd(3)} </text>
-                <text fg={theme.text.base}>#{task.id} {task.title}</text>
+                <box flexGrow={1} minWidth={0} flexDirection="row">
+                  <text
+                    wrapMode="none"
+                    fg={isSelected() ? theme.text.action.primary.focused : theme.text.action.primary.base}
+                    attributes={isSelected() ? TextAttributes.BOLD : undefined}
+                  >
+                    {`${STATUS_LABEL[task.status] ?? task.status}: ${PRIORITY_LABEL[task.priority] ?? task.priority}: #${task.id} ${task.title}`}
+                  </text>
+                </box>
               </box>
-            )}
-          </For>
-        </box>
-      </scrollbox>
-    </box>
+            )
+          }}
+        </For>
+      </Show>
+    </scrollbox>
   )
 }
