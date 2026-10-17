@@ -73,13 +73,18 @@ Requires the package to be published to npm first (`npm publish` from the plugin
 
 ## Commands
 
-- `Ziptask: tasks` — load active tasks and show details
+- `Ziptask: tasks panel` — toggle the Tasks panel (`ctrl+down`)
+- `Ziptask: tasks` — load active tasks in a dialog and show details
 - `Ziptask: settings` — edit the base URL and show the resolved project slug
 
 ## UI
 
 - A compact `tasks: N` counter (non-terminal tasks) is appended to `prompt.footer.status`,
   near the composer/subagent picker, and refreshed on the configured interval.
+- A **Tasks panel** (`ctrl+down`) lists non-terminal tasks with their status and priority.
+  Inside it: `↑`/`↓` (or `k`/`j`) select, `enter` opens the task, `r` reloads, `esc` closes,
+  and clicking a row opens it too. The detail dialog shows the title, status, priority,
+  project, blocked-by, description, and comments.
 
 ## Assumed ziptask HTTP API
 
