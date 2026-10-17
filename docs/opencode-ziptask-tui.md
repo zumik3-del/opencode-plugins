@@ -21,7 +21,9 @@ read-only ziptask endpoints and never mutates a task.
 ## Requirements
 
 - OpenCode with TUI plugin support.
-- A reachable ziptask server. Default base URL `http://127.0.0.1:3005`.
+- A reachable ziptask server — a hard dependency, not an optional extra: without one the counter and
+  the dialogs have nothing to show. Default base URL `http://127.0.0.1:3005`. The server lives in
+  [ziptask](https://github.com/zumik3-del/ziptask).
 - Node with npm >= 7, which installs the peer dependencies of the package.
 - Peer dependencies resolved by npm: `@opentui/core >=0.5.8`, `@opentui/solid >=0.5.8`,
   `solid-js >=1.9.0`.

@@ -106,6 +106,10 @@ their command ids and their entry points.
 
 ## Assumed ziptask HTTP API
 
+A ziptask server is required, not optional — the plugin reads its tasks from one. It lives in
+[ziptask](https://github.com/zumik3-del/ziptask). Both endpoints are read-only and are what the
+plugin assumes:
+
 - `GET /api/tasks?project=<slug>&status=<status>` → `{ "tasks": [{ "id", "title", "status", "priority" }], "total": N }`
 - `GET /api/task/:id` → `{ "task": {...}, "blocked_by": [...], "comments": [...] }`
 
