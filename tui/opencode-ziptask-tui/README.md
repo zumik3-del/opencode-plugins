@@ -2,6 +2,9 @@
 
 OpenCode TUI plugin for browsing ziptask tasks.
 
+A one-screen overview — what it does, how to configure it, the full binding tables — is in the
+[documentation card](../../docs/opencode-ziptask-tui.md). This file stays the manual.
+
 ## Settings
 
 The base URL is stored in OpenCode durable plugin storage
@@ -18,7 +21,7 @@ It can also be pinned in `cli.json` via plugin options, which take priority over
   "plugins": [
     {
       "package": "/absolute/path/to/opencode-plugins/tui/opencode-ziptask-tui",
-      "options": { "baseUrl": "http://192.168.1.93:3005" }
+      "options": { "baseUrl": "http://ziptask.local:3005" }
     }
   ]
 }
@@ -73,13 +76,26 @@ Requires the package to be published to npm first (`npm publish` from the plugin
 
 ## Commands
 
-- `Ziptask: tasks` — toggle the centered Tasks dialog (`ctrl+down`)
-- `Ziptask: settings` — edit the base URL and show the resolved project slug
+Three commands are registered in the global keymap layer, all in the `Ziptask` palette group. The
+palette lists the first two under the same title, `Ziptask: tasks`, so they are told apart here by
+their command ids and their entry points.
+
+- `ziptask.dialog` (`Ziptask: tasks`, bound to `ctrl+down` or the palette) — toggle the centered
+  Tasks dialog; `ctrl+down` again closes it.
+- `ziptask.tasks` (`Ziptask: tasks`, the `/ziptask` slash command or the palette) — pick one of
+  the open tasks (`queued`, `in_progress`, `review`) in the host's select dialog, then read it in
+  a plain alert. With no open tasks it alerts `No active tasks` instead. Both are the host's own
+  dialogs, so they are not sized like the task dialogs above.
+- `ziptask.settings` (`Ziptask: settings`, palette) — prompt for the base URL, store it, then show
+  the resolved project slug.
 
 ## UI
 
 - A compact `tasks: N` counter (non-terminal tasks) is appended to `prompt.footer.status`,
-  near the composer/subagent picker, and refreshed on the configured interval.
+  near the composer/subagent picker. It counts the five non-terminal statuses (`queued`,
+  `in_progress`, `review`, `failed`, `blocked`) of the **active window's** project, and refetches
+  on the configured interval, on a window or tab switch, whenever the resolved project or base
+  URL changes, and after a settings change. A failed fetch renders `tasks: 0`.
 - **Ctrl+Down** opens a centered modal dialog listing non-terminal tasks with their status
   and priority. Inside it: `↑`/`↓` (or `k`/`j`) select, `enter` opens the task, `r` reloads,
   `esc` closes, and clicking a row opens it too. Closing a task returns to the list.
@@ -96,4 +112,4 @@ Requires the package to be published to npm first (`npm publish` from the plugin
 ## Next steps
 
 - Add a sidebar slot with an active-task counter.
-- Add polling/refresh for the task list.
+- Add polling for the open task list: `r` refetches it, but only the footer counter polls.
