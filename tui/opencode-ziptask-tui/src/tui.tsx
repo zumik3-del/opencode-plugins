@@ -1,6 +1,6 @@
 import { Plugin } from "@opencode/plugin/tui"
 import { createSignal } from "solid-js"
-import { DEFAULT_SETTINGS, type ZiptaskSettings } from "./config"
+import { DEFAULT_SETTINGS, projectFromDirectory, type ZiptaskSettings } from "./config"
 import { getTask, listTasks, type TaskSummary } from "./data"
 
 export default Plugin.define({
@@ -10,13 +10,17 @@ export default Plugin.define({
       initial: DEFAULT_SETTINGS,
     })
 
+    // The project is the current directory's slug, the same way the project was created.
+    const currentProject = () => projectFromDirectory(context.location?.directory ?? context.data.location.default().directory)
+
     const [taskCount, setTaskCount] = createSignal(0)
 
     async function refreshTaskCount() {
       try {
-        const { baseUrl, project } = settings
+        const project = currentProject()
+        if (!project) return setTaskCount(0)
         const statuses = ["queued", "in_progress", "review", "failed", "blocked"]
-        const results = await Promise.all(statuses.map((status) => listTasks(baseUrl, project, status)))
+        const results = await Promise.all(statuses.map((status) => listTasks(settings.baseUrl, project, status)))
         setTaskCount(results.reduce((sum, tasks) => sum + tasks.length, 0))
       } catch {
         setTaskCount(0)
@@ -34,9 +38,10 @@ export default Plugin.define({
     void refreshTaskCount()
 
     async function loadActiveTasks(): Promise<TaskSummary[]> {
-      const { baseUrl, project } = settings
+      const project = currentProject()
+      if (!project) return []
       const statuses = ["queued", "in_progress", "review"]
-      const results = await Promise.all(statuses.map((status) => listTasks(baseUrl, project, status)))
+      const results = await Promise.all(statuses.map((status) => listTasks(settings.baseUrl, project, status)))
       return results.flat()
     }
 
@@ -104,16 +109,11 @@ export default Plugin.define({
                 draft.baseUrl = nextUrl
               })
             }
-            const nextProject = await context.ui.dialog.prompt({
-              title: "Ziptask project slug",
-              placeholder: "ziptask",
-              value: settings.project,
+            await context.ui.dialog.alert({
+              title: "Ziptask",
+              message: `project: ${currentProject() || "(unresolved)"}`,
             })
-            if (nextProject !== undefined) {
-              await updateSettings((draft) => {
-                draft.project = nextProject
-              })
-            }
+            void refreshTaskCount()
           },
         },
       ],

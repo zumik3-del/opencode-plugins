@@ -8,9 +8,11 @@ Settings are stored in OpenCode durable plugin storage (`context.storage.store("
 Defaults come from `src/config.ts` and can be overridden with environment variables:
 
 - `ZIPTASK_URL` — ziptask base URL (default `http://127.0.0.1:3005`)
-- `ZIPTASK_PROJECT` — default project slug (default `ziptask`)
 
-An example settings file is provided at `config/settings.example.json`.
+The project slug is **not** configured: it is derived from the current directory name, using the same
+slug rule ziptask uses when a project is created from a folder path (lowercase, `[^a-z0-9._-]` → `-`,
+leading non-alphanumerics stripped, truncated to 32). An example settings file is at
+`config/settings.example.json`.
 
 ## Installation
 
@@ -55,7 +57,7 @@ Requires the package to be published to npm first (`npm publish` from the plugin
 ## Commands
 
 - `Ziptask: tasks` — load active tasks and show details
-- `Ziptask: settings` — edit base URL and project slug
+- `Ziptask: settings` — edit the base URL and show the resolved project slug
 
 ## UI
 
