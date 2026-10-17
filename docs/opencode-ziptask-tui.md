@@ -11,7 +11,8 @@ read-only ziptask endpoints and never mutates a task.
 ## What it does
 
 - Appends a `tasks: N` counter (non-terminal tasks) to the `prompt.footer.status` slot, and renders
-  nothing while the count is zero.
+  nothing while the count is zero. Clicking the counter opens the same centered task list as
+  `ctrl+down`.
 - Opens a centered task list on `ctrl+down`, listing the resolved project's non-terminal tasks
   with status, priority and id.
 - Opens a task detail dialog from a selected row: metadata grid, description, comments.
@@ -126,8 +127,12 @@ behind it.
 - **The counter refetches** on its interval, when a turn ends (`session.idle`), on the
   `session.viewed` event, and whenever the base URL or the resolved project changes. A failed fetch
   resolves to zero, and at zero the counter is not rendered at all.
-- **The counter is display only.** `ctrl+down` and all three palette commands work whether the
-  counter is visible, hidden at zero, or absent because the project has no tasks.
+- **The counter is clickable as well as ambient.** Clicking the `tasks: N` counter opens the
+  centered task list — the same dialog as `ctrl+down` — the way the composer's `Subagents` tab
+  responds to a click. Hover brightens the counter to advertise the affordance, and the click is
+  ignored while a text selection is live so the footer stays copyable. `ctrl+down` and all three
+  palette commands work whether the counter is visible, hidden at zero, or absent because the
+  project has no tasks.
 - **`refreshMs` is read once**, when the plugin sets up its timer, so a later store edit does not
   reschedule it. A value of `0` falls back to `15000`.
 - **The package also exports a no-op server entry** (`src/index.ts`, id `ziptask.server`) so it

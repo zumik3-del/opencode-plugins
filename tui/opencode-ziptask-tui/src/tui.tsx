@@ -59,11 +59,29 @@ export default Plugin.define({
     // a "tasks: 0" footer is noise, and a project with no tasks should look the
     // same as an unreachable server — both resolve to 0. Same shape as the
     // built-in `opencode.btw` indicator in this slot.
+    //
+    // The counter is also a mouse target: clicking it opens the same tasks
+    // dialog as ctrl+down, the way the composer's Subagents tab responds to a
+    // click. Hover brightens it to advertise the affordance, and a live text
+    // selection suppresses the open so the footer stays copyable.
+    const [footerHover, setFooterHover] = createSignal(false)
     const unregisterSlot = context.ui.slot({
       append: "prompt.footer.status",
       render: () => (
         <Show when={(taskCount() ?? 0) > 0}>
-          <text fg={context.theme.text.muted}>tasks: {taskCount()}</text>
+          <box
+            flexShrink={0}
+            onMouseOver={() => setFooterHover(true)}
+            onMouseOut={() => setFooterHover(false)}
+            onMouseUp={() => {
+              if (context.renderer.getSelection()?.getSelectedText()) return
+              openTasksDialog()
+            }}
+          >
+            <text fg={footerHover() ? context.theme.text.base : context.theme.text.muted}>
+              tasks: {taskCount()}
+            </text>
+          </box>
         </Show>
       ),
     })

@@ -96,8 +96,10 @@ their command ids and their entry points.
   `in_progress`, `review`, `failed`, `blocked`) of the **active window's** project, and refetches
   on the configured interval, when a turn ends (`session.idle`), on a window or tab switch, whenever
   the resolved project or base URL changes, and after a settings change. It is hidden entirely while
-  the count is zero — including while loading and when the fetch fails. The counter is display only:
-  `ctrl+down` and the palette commands work whether it is visible or not.
+  the count is zero — including while loading and when the fetch fails. Clicking the counter opens
+  the centered Tasks dialog, the same as `ctrl+down`, like the composer's `Subagents` tab: hover
+  brightens it and a live text selection suppresses the click. `ctrl+down` and the palette commands
+  work whether it is visible or not.
 - **Ctrl+Down** opens a centered modal dialog listing non-terminal tasks with their status
   and priority. Inside it: `↑`/`↓` (or `k`/`j`) select, `enter` opens the task, `r` reloads,
   `esc` closes, and clicking a row opens it too. Closing a task returns to the list.
