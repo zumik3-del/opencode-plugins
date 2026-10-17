@@ -9,7 +9,9 @@
   },
   "files": [
     "src",
-    "config"
+    "config",
+    "index.ts",
+    "tui.tsx"
   ],
   "dependencies": {
     "@opencode/plugin": "latest"

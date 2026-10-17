@@ -14,7 +14,7 @@ export default Plugin.define({
 
     async function refreshTaskCount() {
       try {
-        const { baseUrl, project } = settings()
+        const { baseUrl, project } = settings
         const statuses = ["queued", "in_progress", "review", "failed", "blocked"]
         const results = await Promise.all(statuses.map((status) => listTasks(baseUrl, project, status)))
         setTaskCount(results.reduce((sum, tasks) => sum + tasks.length, 0))
@@ -30,11 +30,11 @@ export default Plugin.define({
 
     const countTimer = setInterval(() => {
       void refreshTaskCount()
-    }, settings().refreshMs || 15000)
+    }, settings.refreshMs || 15000)
     void refreshTaskCount()
 
     async function loadActiveTasks(): Promise<TaskSummary[]> {
-      const { baseUrl, project } = settings()
+      const { baseUrl, project } = settings
       const statuses = ["queued", "in_progress", "review"]
       const results = await Promise.all(statuses.map((status) => listTasks(baseUrl, project, status)))
       return results.flat()
@@ -65,7 +65,7 @@ export default Plugin.define({
                 })),
               })
               if (selected === undefined) return
-              const detail = await getTask(settings().baseUrl, selected)
+              const detail = await getTask(settings.baseUrl, selected)
               await context.ui.dialog.alert({
                 title: `#${detail.id} ${detail.title}`,
                 message: [
@@ -97,7 +97,7 @@ export default Plugin.define({
             const nextUrl = await context.ui.dialog.prompt({
               title: "Ziptask base URL",
               placeholder: "http://127.0.0.1:3005",
-              value: settings().baseUrl,
+              value: settings.baseUrl,
             })
             if (nextUrl !== undefined) {
               await updateSettings((draft) => {
@@ -107,7 +107,7 @@ export default Plugin.define({
             const nextProject = await context.ui.dialog.prompt({
               title: "Ziptask project slug",
               placeholder: "ziptask",
-              value: settings().project,
+              value: settings.project,
             })
             if (nextProject !== undefined) {
               await updateSettings((draft) => {

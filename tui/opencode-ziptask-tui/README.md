@@ -8,9 +8,49 @@ Settings are stored in OpenCode durable plugin storage (`context.storage.store("
 Defaults come from `src/config.ts` and can be overridden with environment variables:
 
 - `ZIPTASK_URL` — ziptask base URL (default `http://127.0.0.1:3005`)
-- `ZIPTASK_PROJECT` — default project slug
+- `ZIPTASK_PROJECT` — default project slug (default `ziptask`)
 
 An example settings file is provided at `config/settings.example.json`.
+
+## Installation
+
+### Local (development)
+
+The loader for a local path (`cli.json` → `plugins: ["/path"]`) and for directory discovery
+(`~/.config/opencode/plugins/<name>/`) looks for `index.ts` and `tui.ts`/`tui.tsx` in the
+**root of the directory** and ignores `package.json` → `exports`. This package ships both root
+entrypoints, so point `cli.json` straight at the directory:
+
+```sh
+git clone https://github.com/zumik3-del/opencode-plugins.git
+cd opencode-plugins/tui/opencode-ziptask-tui
+npm install
+```
+
+```jsonc
+// ~/.config/opencode/cli.json
+{ "plugins": ["/absolute/path/to/opencode-plugins/tui/opencode-ziptask-tui"] }
+```
+
+`npm install` (npm >= 7) installs the `@opentui/*` and `solid-js` peer dependencies — no manual
+peer installation is needed.
+
+Alternatively symlink the directory into the discovery folder:
+
+```sh
+ln -s /absolute/path/to/opencode-plugins/tui/opencode-ziptask-tui ~/.config/opencode/plugins/ziptask
+```
+
+Do **not** register the same plugin both in `cli.json` and in `~/.config/opencode/plugins/` —
+that duplicates the plugin id.
+
+### From npm (after publishing)
+
+```sh
+opencode plugin add opencode-ziptask-tui
+```
+
+Requires the package to be published to npm first (`npm publish` from the plugin directory).
 
 ## Commands
 
@@ -24,13 +64,10 @@ An example settings file is provided at `config/settings.example.json`.
 
 ## Assumed ziptask HTTP API
 
-The plugin currently assumes these endpoints exist (to be added to ziptask later):
-
-- `GET /api/tasks?project=<slug>&status=<status>` → `{ "tasks": [{ "id", "title", "status", "priority" }] }`
-- `GET /api/task/:id` → `{ "task": {...}, "blocked_by": [...], "comments": [...] }` (already exists)
+- `GET /api/tasks?project=<slug>&status=<status>` → `{ "tasks": [{ "id", "title", "status", "priority" }], "total": N }`
+- `GET /api/task/:id` → `{ "task": {...}, "blocked_by": [...], "comments": [...] }`
 
 ## Next steps
 
-- Add the assumed REST endpoints to ziptask.
 - Add a sidebar slot with an active-task counter.
 - Add polling/refresh for the task list.
