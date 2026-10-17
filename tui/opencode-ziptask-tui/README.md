@@ -17,8 +17,15 @@ An example settings file is provided at `config/settings.example.json`.
 - `Ziptask: tasks` — show current settings (placeholder; task list coming next)
 - `Ziptask: settings` — edit base URL and project slug
 
+## Assumed ziptask HTTP API
+
+The plugin currently assumes these endpoints exist (to be added to ziptask later):
+
+- `GET /api/tasks?project=<slug>&status=<status>` → `{ "tasks": [{ "id", "title", "status", "priority" }] }`
+- `GET /api/task/:id` → `{ "task": {...}, "blocked_by": [...], "comments": [...] }` (already exists)
+
 ## Next steps
 
-- Implement ziptask MCP client (`fetch` to `/mcp`) for `list_projects`, `list_tasks`, `list_queue`.
-- Replace the alert with a `select` dialog listing tasks.
+- Add the assumed REST endpoints to ziptask.
 - Add a sidebar slot with an active-task counter.
+- Add polling/refresh for the task list.
