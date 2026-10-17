@@ -5,8 +5,13 @@ Local workspace for OpenCode plugins.
 ## Structure
 
 - `tui/` — TUI (CLI) plugins that extend the OpenCode terminal interface.
-- `server/` — server-side plugins that run in the OpenCode background service.
-- `shared/` — shared utilities.
+- `docs/` — one documentation card per plugin.
+
+`server/` and `shared/` are not part of the tree yet.
+
+## Documentation
+
+Per-plugin cards live in [`docs/`](docs/README.md).
 
 ## Notes
 
