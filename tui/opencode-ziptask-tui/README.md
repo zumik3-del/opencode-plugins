@@ -4,10 +4,27 @@ OpenCode TUI plugin for browsing ziptask tasks.
 
 ## Settings
 
-Settings are stored in OpenCode durable plugin storage (`context.storage.store("ziptask")`).
-Defaults come from `src/config.ts` and can be overridden with environment variables:
+The base URL is stored in OpenCode durable plugin storage
+(`context.storage.store("ziptask")`) and seeded with the default from `src/config.ts`
+(`http://127.0.0.1:3005`). Change it with the `Ziptask: settings` command; the current
+value lives at
+`~/.local/state/opencode/latest/tui/plugin.ziptask.tui.ziptask.json`.
 
-- `ZIPTASK_URL` — ziptask base URL (default `http://127.0.0.1:3005`)
+It can also be pinned in `cli.json` via plugin options, which take priority over the store:
+
+```jsonc
+// ~/.config/opencode/cli.json
+{
+  "plugins": [
+    {
+      "package": "/absolute/path/to/opencode-plugins/tui/opencode-ziptask-tui",
+      "options": { "baseUrl": "http://192.168.1.93:3005" }
+    }
+  ]
+}
+```
+
+Priority: `options` → durable store → default.
 
 The project slug is **not** configured: it is derived from the current directory name, using the same
 slug rule ziptask uses when a project is created from a folder path (lowercase, `[^a-z0-9._-]` → `-`,

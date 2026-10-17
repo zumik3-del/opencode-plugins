@@ -10,6 +10,9 @@ export default Plugin.define({
       initial: DEFAULT_SETTINGS,
     })
 
+    // Priority: plugin options (cli.json) -> durable store -> default.
+    const baseUrl = () => (context.options.baseUrl as string | undefined) ?? settings.baseUrl
+
     // The project is the current directory's slug, the same way the project was created.
     const currentProject = () => projectFromDirectory(context.location?.directory ?? context.data.location.default().directory)
 
@@ -20,7 +23,7 @@ export default Plugin.define({
         const project = currentProject()
         if (!project) return setTaskCount(0)
         const statuses = ["queued", "in_progress", "review", "failed", "blocked"]
-        const results = await Promise.all(statuses.map((status) => listTasks(settings.baseUrl, project, status)))
+        const results = await Promise.all(statuses.map((status) => listTasks(baseUrl(), project, status)))
         setTaskCount(results.reduce((sum, tasks) => sum + tasks.length, 0))
       } catch {
         setTaskCount(0)
@@ -41,7 +44,7 @@ export default Plugin.define({
       const project = currentProject()
       if (!project) return []
       const statuses = ["queued", "in_progress", "review"]
-      const results = await Promise.all(statuses.map((status) => listTasks(settings.baseUrl, project, status)))
+      const results = await Promise.all(statuses.map((status) => listTasks(baseUrl(), project, status)))
       return results.flat()
     }
 
@@ -70,7 +73,7 @@ export default Plugin.define({
                 })),
               })
               if (selected === undefined) return
-              const detail = await getTask(settings.baseUrl, selected)
+              const detail = await getTask(baseUrl(), selected)
               await context.ui.dialog.alert({
                 title: `#${detail.id} ${detail.title}`,
                 message: [
@@ -102,7 +105,7 @@ export default Plugin.define({
             const nextUrl = await context.ui.dialog.prompt({
               title: "Ziptask base URL",
               placeholder: "http://127.0.0.1:3005",
-              value: settings.baseUrl,
+              value: baseUrl(),
             })
             if (nextUrl !== undefined) {
               await updateSettings((draft) => {

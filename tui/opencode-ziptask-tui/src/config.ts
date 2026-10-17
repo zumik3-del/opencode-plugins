@@ -4,7 +4,7 @@ export type ZiptaskSettings = {
 }
 
 export const DEFAULT_SETTINGS: ZiptaskSettings = {
-  baseUrl: process.env.ZIPTASK_URL ?? "http://127.0.0.1:3005",
+  baseUrl: "http://127.0.0.1:3005",
   refreshMs: 15000,
 }
 
