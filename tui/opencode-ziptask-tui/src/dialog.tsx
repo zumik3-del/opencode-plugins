@@ -81,31 +81,33 @@ export function TasksDialog(props: {
         id: "ziptask.dialog.up",
         title: "Previous task",
         bind: "up,k",
-        run: () => setSelected((index) => Math.max(0, index - 1)),
+        run: () => {
+          setSelected((index) => Math.max(0, index - 1))
+        },
       },
       {
         id: "ziptask.dialog.down",
         title: "Next task",
         bind: "down,j",
-        run: () => setSelected((index) => Math.min(Math.max(rows().length - 1, 0), index + 1)),
+        run: () => {
+          setSelected((index) => Math.min(Math.max(rows().length - 1, 0), index + 1))
+        },
       },
       {
         id: "ziptask.dialog.open",
         title: "Open task",
         bind: "return",
-        run: () => void openSelected(),
+        run: () => {
+          void openSelected()
+        },
       },
       {
         id: "ziptask.dialog.refresh",
         title: "Refresh tasks",
         bind: "r",
-        run: () => setReload((value) => value + 1),
-      },
-      {
-        id: "ziptask.dialog.close",
-        title: "Close tasks",
-        bind: "escape",
-        run: () => context.ui.dialog.clear(),
+        run: () => {
+          setReload((value) => value + 1)
+        },
       },
     ],
   }))

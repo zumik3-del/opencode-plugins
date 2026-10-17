@@ -46,13 +46,15 @@ export default Plugin.define({
         return
       }
       setTasksOpen(true)
-      // "xlarge" is the widest the host offers (116 columns, clamped to the
-      // terminal width minus 2); medium is 60 and large is 88.
-      context.ui.dialog.set({ size: "xlarge", centered: true })
       context.ui.dialog.show(
         () => <TasksDialog baseUrl={baseUrl} project={currentProject} />,
         () => setTasksOpen(false),
       )
+      // Must come after show(): the host's replace() resets size to "medium" and
+      // centered to false, so a set() before show() is silently discarded.
+      // "xlarge" is the widest the host offers (116 columns, clamped to the
+      // terminal width minus 2); medium is 60 and large is 88.
+      context.ui.dialog.set({ size: "xlarge", centered: true })
     }
 
     const countTimer = setInterval(() => {
