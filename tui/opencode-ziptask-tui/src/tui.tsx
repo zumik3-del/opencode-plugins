@@ -1,5 +1,5 @@
 import { Plugin } from "@opencode/plugin/tui"
-import { createSignal } from "solid-js"
+import { createResource, createSignal } from "solid-js"
 import { DEFAULT_SETTINGS, projectFromDirectory, type ZiptaskSettings } from "./config"
 import { getTask, listTasks, type TaskSummary } from "./data"
 import { TasksDialog, TaskDetailDialog } from "./dialog"
@@ -15,25 +15,34 @@ export default Plugin.define({
     const baseUrl = () => (context.options.baseUrl as string | undefined) ?? settings.baseUrl
 
     // The project is the current directory's slug, the same way the project was created.
-    const currentProject = () => projectFromDirectory(context.location?.directory ?? context.data.location.default().directory)
+    // Read the location from the reactive data store first: context.location is
+    // captured once at setup, so it would pin the counter to the first window.
+    const currentProject = () =>
+      projectFromDirectory(context.data.location.default()?.directory ?? context.location?.directory)
 
-    const [taskCount, setTaskCount] = createSignal(0)
+    const COUNTER_STATUSES = ["queued", "in_progress", "review", "failed", "blocked"] as const
 
-    async function refreshTaskCount() {
-      try {
-        const project = currentProject()
-        if (!project) return setTaskCount(0)
-        const statuses = ["queued", "in_progress", "review", "failed", "blocked"]
-        const results = await Promise.all(statuses.map((status) => listTasks(baseUrl(), project, status)))
-        setTaskCount(results.reduce((sum, tasks) => sum + tasks.length, 0))
-      } catch {
-        setTaskCount(0)
-      }
-    }
+    // A resource keyed on the resolved project: switching windows changes the
+    // location, which changes the key, which refetches the count immediately.
+    const [taskCount, { refetch: refetchCount }] = createResource(
+      () => ({ baseUrl: baseUrl(), project: currentProject() }),
+      async (key) => {
+        if (!key.project) return 0
+        const results = await Promise.all(
+          COUNTER_STATUSES.map((status) => listTasks(key.baseUrl, key.project, status)),
+        )
+        return results.reduce((sum, tasks) => sum + tasks.length, 0)
+      },
+    )
 
     const unregisterSlot = context.ui.slot({
       append: "prompt.footer.status",
-      render: () => <text fg={context.theme.text.muted}>tasks: {taskCount()}</text>,
+      render: () => <text fg={context.theme.text.muted}>tasks: {taskCount() ?? 0}</text>,
+    })
+
+    // Safety net in case the location store is not reactive on its own.
+    const offSessionViewed = context.data.on("session.viewed", () => {
+      void refetchCount()
     })
 
     // The host pushes the "modal" input mode while a dialog is open, so the
@@ -83,9 +92,8 @@ export default Plugin.define({
     }
 
     const countTimer = setInterval(() => {
-      void refreshTaskCount()
+      void refetchCount()
     }, settings.refreshMs || 15000)
-    void refreshTaskCount()
 
     async function loadActiveTasks(): Promise<TaskSummary[]> {
       const project = currentProject()
@@ -171,7 +179,7 @@ export default Plugin.define({
               title: "Ziptask",
               message: `project: ${currentProject() || "(unresolved)"}`,
             })
-            void refreshTaskCount()
+            void refetchCount()
           },
         },
       ],
@@ -181,6 +189,7 @@ export default Plugin.define({
 
     return () => {
       clearInterval(countTimer)
+      offSessionViewed()
       unregisterSlot()
     }
   },
