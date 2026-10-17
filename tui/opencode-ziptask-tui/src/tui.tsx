@@ -52,9 +52,9 @@ export default Plugin.define({
       )
       // Must come after show(): the host's replace() resets size to "medium" and
       // centered to false, so a set() before show() is silently discarded.
-      // "xlarge" is the widest the host offers (116 columns, clamped to the
-      // terminal width minus 2); medium is 60 and large is 88.
-      context.ui.dialog.set({ size: "xlarge", centered: true })
+      // The host only offers three widths — medium 60, large 88, xlarge 116 —
+      // so "large" (about 24% narrower than xlarge) is the closest to -20%.
+      context.ui.dialog.set({ size: "large", centered: true })
     }
 
     const countTimer = setInterval(() => {
