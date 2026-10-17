@@ -10,7 +10,8 @@ read-only ziptask endpoints and never mutates a task.
 
 ## What it does
 
-- Appends a `tasks: N` counter (non-terminal tasks) to the `prompt.footer.status` slot.
+- Appends a `tasks: N` counter (non-terminal tasks) to the `prompt.footer.status` slot, and renders
+  nothing while the count is zero.
 - Opens a centered task list on `ctrl+down`, listing the resolved project's non-terminal tasks
   with status, priority and id.
 - Opens a task detail dialog from a selected row: metadata grid, description, comments.
@@ -108,11 +109,11 @@ behind it.
 
 ## Behavior worth knowing
 
-- **An unknown project slug fails silently to 0.** ziptask answers HTTP 400 for a slug that matches
-  no project; the counter and the list swallow it and show `tasks: 0` and an empty list. This is
-  intended: the footer is ambient chrome and must not interrupt, and a toast on every window switch
-  would be noise. The failure stays visible where it matters — the dialog, which is a deliberate
-  user action, shows the empty state.
+- **An unknown project slug fails silently to zero.** ziptask answers HTTP 400 for a slug that matches
+  no project; the counter swallows it, resolves to zero and renders nothing, and the list renders
+  empty. This is intended: the footer is ambient chrome and must not interrupt, and a toast on every
+  window switch would be noise. The failure stays visible where it matters — the dialog, which is a
+  deliberate user action, shows the empty state.
 - **The status sets differ.** The counter and the list cover the five non-terminal statuses
   (`queued`, `in_progress`, `review`, `failed`, `blocked`); `/ziptask` covers the three open ones
   (`queued`, `in_progress`, `review`).
@@ -122,8 +123,11 @@ behind it.
 - **Both dialogs are `large`** — 88 columns, the middle of the 60/88/116 the host offers — and
   centered. The size is applied after the dialog is shown, because showing it resets those
   properties.
-- **The counter refetches** on its interval, on the `session.viewed` event, and whenever the base
-  URL or the resolved project changes. A failed fetch renders `tasks: 0`.
+- **The counter refetches** on its interval, when a turn ends (`session.idle`), on the
+  `session.viewed` event, and whenever the base URL or the resolved project changes. A failed fetch
+  resolves to zero, and at zero the counter is not rendered at all.
+- **The counter is display only.** `ctrl+down` and all three palette commands work whether the
+  counter is visible, hidden at zero, or absent because the project has no tasks.
 - **`refreshMs` is read once**, when the plugin sets up its timer, so a later store edit does not
   reschedule it. A value of `0` falls back to `15000`.
 - **The package also exports a no-op server entry** (`src/index.ts`, id `ziptask.server`) so it
@@ -131,10 +135,12 @@ behind it.
 
 ## Troubleshooting
 
-- **The counter reads 0 and the list is empty.** Run `Ziptask: settings`: it reports the resolved
-  project. `(unresolved)` means no directory was found and no request is made at all; a slug ziptask
-  does not know returns 400 and is swallowed by design. An empty project is indistinguishable from
-  an unreachable server from the dialog — both render the same empty state.
+- **No counter is shown and the list is empty.** An absent counter is the normal state for a project
+  with no non-terminal tasks, so on its own it is not a signal. Run `Ziptask: settings` to see the
+  resolved project: `(unresolved)` means no directory was found and no request is made at all, while
+  a slug ziptask does not know returns 400 and is swallowed by design. A project with no tasks, an
+  unknown slug and an unreachable server are indistinguishable from the UI — all three render the
+  same empty state.
 - **A new base URL has no effect.** `options.baseUrl` in `cli.json` outranks the store, and the
   `Ziptask: settings` prompt writes only the store. Remove or edit the pin in `cli.json`.
 - **The plugin appears twice.** It is registered both in `cli.json` and in

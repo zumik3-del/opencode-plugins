@@ -1,5 +1,5 @@
 import { Plugin } from "@opencode/plugin/tui"
-import { createMemo, createResource, createSignal } from "solid-js"
+import { createMemo, createResource, createSignal, Show } from "solid-js"
 import { DEFAULT_SETTINGS, projectFromDirectory, type ZiptaskSettings } from "./config"
 import { getTask, listTasks, type TaskSummary } from "./data"
 import { TasksDialog, TaskDetailDialog } from "./dialog"
@@ -55,13 +55,29 @@ export default Plugin.define({
       }
     })
 
+    // Nothing at all while the count is 0 or the resource has not resolved yet:
+    // a "tasks: 0" footer is noise, and a project with no tasks should look the
+    // same as an unreachable server — both resolve to 0. Same shape as the
+    // built-in `opencode.btw` indicator in this slot.
     const unregisterSlot = context.ui.slot({
       append: "prompt.footer.status",
-      render: () => <text fg={context.theme.text.muted}>tasks: {taskCount() ?? 0}</text>,
+      render: () => (
+        <Show when={(taskCount() ?? 0) > 0}>
+          <text fg={context.theme.text.muted}>tasks: {taskCount() ?? 0}</text>
+        </Show>
+      ),
     })
 
     // Safety net in case the location store is not reactive on its own.
     const offSessionViewed = context.data.on("session.viewed", () => {
+      void refetchCount()
+    })
+
+    // A task claimed or created in this window may not change the reactive key,
+    // and the interval only catches changes from other machines. Idle fires once
+    // per turn, so it is the cheapest moment to notice a count that went from
+    // 0 to something. `session.tool.success` would refetch per tool call.
+    const offSessionIdle = context.data.on("session.idle", () => {
       void refetchCount()
     })
 
@@ -210,6 +226,7 @@ export default Plugin.define({
     return () => {
       clearInterval(countTimer)
       offSessionViewed()
+      offSessionIdle()
       unregisterSlot()
     }
   },

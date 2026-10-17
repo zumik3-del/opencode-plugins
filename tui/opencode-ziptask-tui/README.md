@@ -94,8 +94,10 @@ their command ids and their entry points.
 - A compact `tasks: N` counter (non-terminal tasks) is appended to `prompt.footer.status`,
   near the composer/subagent picker. It counts the five non-terminal statuses (`queued`,
   `in_progress`, `review`, `failed`, `blocked`) of the **active window's** project, and refetches
-  on the configured interval, on a window or tab switch, whenever the resolved project or base
-  URL changes, and after a settings change. A failed fetch renders `tasks: 0`.
+  on the configured interval, when a turn ends (`session.idle`), on a window or tab switch, whenever
+  the resolved project or base URL changes, and after a settings change. It is hidden entirely while
+  the count is zero — including while loading and when the fetch fails. The counter is display only:
+  `ctrl+down` and the palette commands work whether it is visible or not.
 - **Ctrl+Down** opens a centered modal dialog listing non-terminal tasks with their status
   and priority. Inside it: `↑`/`↓` (or `k`/`j`) select, `enter` opens the task, `r` reloads,
   `esc` closes, and clicking a row opens it too. Closing a task returns to the list.
