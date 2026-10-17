@@ -63,7 +63,7 @@ export default Plugin.define({
       append: "prompt.footer.status",
       render: () => (
         <Show when={(taskCount() ?? 0) > 0}>
-          <text fg={context.theme.text.muted}>tasks: {taskCount() ?? 0}</text>
+          <text fg={context.theme.text.muted}>tasks: {taskCount()}</text>
         </Show>
       ),
     })
@@ -220,8 +220,6 @@ export default Plugin.define({
         },
       ],
     }))
-
-    context.ui.toast.show({ message: "Ziptask TUI plugin loaded", variant: "success" })
 
     return () => {
       clearInterval(countTimer)
