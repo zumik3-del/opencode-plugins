@@ -1,5 +1,5 @@
 import { Plugin } from "@opencode/plugin/tui"
-import { createResource, createSignal } from "solid-js"
+import { createMemo, createResource, createSignal } from "solid-js"
 import { DEFAULT_SETTINGS, projectFromDirectory, type ZiptaskSettings } from "./config"
 import { getTask, listTasks, type TaskSummary } from "./data"
 import { TasksDialog, TaskDetailDialog } from "./dialog"
@@ -14,33 +14,46 @@ export default Plugin.define({
     // Priority: plugin options (cli.json) -> durable store -> default.
     const baseUrl = () => (context.options.baseUrl as string | undefined) ?? settings.baseUrl
 
-    // The project is the current directory's slug, the same way the project was created.
-    // Read the location from the reactive data store first: context.location is
-    // captured once at setup, so it would pin the counter to the first window.
-    const currentProject = () =>
-      projectFromDirectory(context.data.location.default()?.directory ?? context.location?.directory)
+    // The project is the active window's directory slug, the same way it was created.
+    // `context.location` is captured once at setup and `data.location.default()` only
+    // tracks the client's launch directory — neither follows a project opened in another
+    // window/tab. The active tab's session carries the real per-window location.
+    const currentProject = () => {
+      const activeSessionID = context.ui.tabs.list().find((tab) => tab.active)?.sessionID
+      const directory =
+        (activeSessionID ? context.data.session.get(activeSessionID)?.location.directory : undefined) ??
+        context.location?.directory ??
+        context.data.location.default()?.directory
+      return projectFromDirectory(directory)
+    }
 
     const COUNTER_STATUSES = ["queued", "in_progress", "review", "failed", "blocked"] as const
 
     // A resource keyed on the resolved project: switching windows changes the
     // location, which changes the key, which refetches the count immediately.
-    const [taskCount, { refetch: refetchCount }] = createResource(
+    // The source builds a fresh object on each run. createResource has no `equals`
+    // option in this Solid version, so memoise the key with one instead, to avoid
+    // refetching when neither the base URL nor the resolved project changed.
+    const countKey = createMemo(
       () => ({ baseUrl: baseUrl(), project: currentProject() }),
-      async (key) => {
-        if (!key.project) return 0
-        // ziptask answers 400 for a slug that matches no project, which would
-        // otherwise put the resource into an error state and throw when the
-        // footer slot reads it.
-        try {
-          const results = await Promise.all(
-            COUNTER_STATUSES.map((status) => listTasks(key.baseUrl, key.project, status)),
-          )
-          return results.reduce((sum, tasks) => sum + tasks.length, 0)
-        } catch {
-          return 0
-        }
-      },
+      undefined,
+      { equals: (a, b) => a.baseUrl === b.baseUrl && a.project === b.project },
     )
+
+    const [taskCount, { refetch: refetchCount }] = createResource(countKey, async (key) => {
+      if (!key.project) return 0
+      // ziptask answers 400 for a slug that matches no project, which would
+      // otherwise put the resource into an error state and throw when the
+      // footer slot reads it.
+      try {
+        const results = await Promise.all(
+          COUNTER_STATUSES.map((status) => listTasks(key.baseUrl, key.project, status)),
+        )
+        return results.reduce((sum, tasks) => sum + tasks.length, 0)
+      } catch {
+        return 0
+      }
+    })
 
     const unregisterSlot = context.ui.slot({
       append: "prompt.footer.status",
