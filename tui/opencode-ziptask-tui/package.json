@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "description": "OpenCode TUI plugin for browsing ziptask tasks",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./tui": "./src/tui.tsx"
