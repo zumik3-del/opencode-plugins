@@ -24,7 +24,7 @@ Interactively change the model assigned to an OpenCode subagent. The plugin list
 Local development:
 
 ```sh
-cd /mnt/external/zum/PROJECTS/local/opencode-plugins/tui/opencode-subagent-models-tui
+cd /path/to/opencode-plugins/tui/opencode-subagent-models-tui
 npm install
 ```
 
