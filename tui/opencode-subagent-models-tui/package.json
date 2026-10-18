@@ -1,0 +1,24 @@
+{
+  "name": "opencode-subagent-models-tui",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tui": "./src/tui.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opencode/plugin": "latest"
+  },
+  "peerDependencies": {
+    "@opentui/core": "*",
+    "@opentui/solid": "*",
+    "solid-js": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

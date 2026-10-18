@@ -9,6 +9,7 @@ and a card links to it instead of restating it.
 | Plugin | Type | Summary | Card |
 | --- | --- | --- | --- |
 | `opencode-ziptask-tui` | TUI | ziptask task counter in the prompt footer, plus a task list and a task detail dialog | [opencode-ziptask-tui.md](opencode-ziptask-tui.md) |
+| `opencode-subagent-models-tui` | TUI | list subagents and interactively change their model using server-available models | [opencode-subagent-models-tui.md](opencode-subagent-models-tui.md) |
 
 A card is added when the plugin lands, not before. `tui/` is the only folder that holds a plugin so
 far.
