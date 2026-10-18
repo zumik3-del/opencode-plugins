@@ -4,6 +4,8 @@ import { DEFAULT_SETTINGS, agentsDirFromOptions, type SubagentModelsSettings } f
 import {
   agentFilePath,
   agentModelString,
+  availableModels,
+  filterEditableAgents,
   listAgentFiles,
   readFileText,
   setModelLine,
@@ -49,10 +51,7 @@ export default Plugin.define({
           return
         }
 
-        let agents = (context.data.location.agent.list() ?? [])
-          .filter((agent: any) => agent.mode === "subagent" && !agent.hidden)
-          .filter((agent: any) => listing.ids.has(agent.id))
-          .sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)))
+        let agents = filterEditableAgents(context.data.location.agent.list() ?? [], listing.ids)
 
         if (agents.length === 0) {
           await context.ui.dialog.alert({
@@ -62,17 +61,10 @@ export default Plugin.define({
           return
         }
 
-        const providers = context.data.location.provider.list() ?? []
-        const providerName = new Map(providers.map((provider: any) => [provider.id, provider.name || provider.id]))
-
-        const models = (context.data.location.model.list() ?? [])
-          .filter((model: any) => model.enabled !== false && model.status !== "deprecated")
-          .sort((a: any, b: any) => {
-            const pa = String(providerName.get(a.providerID) || a.providerID)
-            const pb = String(providerName.get(b.providerID) || b.providerID)
-            if (pa !== pb) return pa.localeCompare(pb)
-            return String(a.name || a.id).localeCompare(String(b.name || b.id))
-          })
+        const { models, providerName } = availableModels(
+          context.data.location.model.list() ?? [],
+          context.data.location.provider.list() ?? [],
+        )
 
         if (models.length === 0) {
           await context.ui.dialog.alert({ title: "Subagent models", message: "No models available" })
@@ -127,10 +119,7 @@ export default Plugin.define({
           await syncData()
           const refreshed = await listAgentFiles(context.client, dir)
           if (refreshed.ok) {
-            agents = (context.data.location.agent.list() ?? [])
-              .filter((item: any) => item.mode === "subagent" && !item.hidden)
-              .filter((item: any) => refreshed.ids.has(item.id))
-              .sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)))
+            agents = filterEditableAgents(context.data.location.agent.list() ?? [], refreshed.ids)
           }
         }
       } catch (error) {

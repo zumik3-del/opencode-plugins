@@ -69,6 +69,26 @@ export function setModelLine(content: string, model: string): string {
   return `---\n${lines.join("\n")}\n---\n${body}`
 }
 
+export function filterEditableAgents(agents: any[], fileIds: Set<string>): any[] {
+  return (agents ?? [])
+    .filter((agent: any) => agent.mode === "subagent" && !agent.hidden)
+    .filter((agent: any) => fileIds.has(agent.id))
+    .sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)))
+}
+
+export function availableModels(models: any[], providers: any[]): { models: any[]; providerName: Map<string, string> } {
+  const providerName = new Map((providers ?? []).map((provider: any) => [provider.id, provider.name || provider.id]))
+  const filtered = (models ?? [])
+    .filter((model: any) => model.enabled !== false && model.status !== "deprecated")
+    .sort((a: any, b: any) => {
+      const pa = String(providerName.get(a.providerID) || a.providerID)
+      const pb = String(providerName.get(b.providerID) || b.providerID)
+      if (pa !== pb) return pa.localeCompare(pb)
+      return String(a.name || a.id).localeCompare(String(b.name || b.id))
+    })
+  return { models: filtered, providerName }
+}
+
 export function agentFilePath(agentsDir: string, agentId: string): string {
   const clean = agentId.replace(/[^a-zA-Z0-9._-]/g, "")
   if (!clean || clean !== agentId) throw new Error(`invalid agent id: ${agentId}`)
