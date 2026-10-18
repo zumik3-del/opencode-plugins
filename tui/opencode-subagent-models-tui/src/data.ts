@@ -26,7 +26,12 @@ export async function writeFileText(client: any, path: string, content: string):
   await client.file.write({ path, payload })
 }
 
-export async function listAgentFiles(client: any, agentsDir: string): Promise<Set<string>> {
+export interface AgentFileListing {
+  ok: boolean
+  ids: Set<string>
+}
+
+export async function listAgentFiles(client: any, agentsDir: string): Promise<AgentFileListing> {
   try {
     const result = await client.file.list({ path: agentsDir })
     const entries = Array.isArray(result?.data) ? result.data : []
@@ -36,9 +41,9 @@ export async function listAgentFiles(client: any, agentsDir: string): Promise<Se
       const match = name.match(/^(.+)\.md$/)
       if (match) ids.add(match[1])
     }
-    return ids
+    return { ok: true, ids }
   } catch {
-    return new Set()
+    return { ok: false, ids: new Set() }
   }
 }
 

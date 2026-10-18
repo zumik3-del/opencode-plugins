@@ -40,19 +40,24 @@ export default Plugin.define({
 
         await syncData()
 
-        const editableFiles = await listAgentFiles(context.client, dir)
+        const listing = await listAgentFiles(context.client, dir)
+        if (!listing.ok) {
+          await context.ui.dialog.alert({
+            title: "Subagent models",
+            message: "Could not read the agents directory. Check 'Subagent models: agents directory'.",
+          })
+          return
+        }
 
         const agents = (context.data.location.agent.list() ?? [])
           .filter((agent: any) => agent.mode === "subagent" && !agent.hidden)
-          .filter((agent: any) => editableFiles.size === 0 || editableFiles.has(agent.id))
+          .filter((agent: any) => listing.ids.has(agent.id))
           .sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)))
 
         if (agents.length === 0) {
           await context.ui.dialog.alert({
             title: "Subagent models",
-            message: editableFiles.size === 0
-              ? "Could not read the agents directory. Check 'Subagent models: agents directory'."
-              : "No editable subagents found (built-in agents have no file).",
+            message: "No editable subagents found (built-in agents have no file).",
           })
           return
         }
