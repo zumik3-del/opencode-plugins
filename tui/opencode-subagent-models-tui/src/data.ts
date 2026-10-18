@@ -89,6 +89,34 @@ export function availableModels(models: any[], providers: any[]): { models: any[
   return { models: filtered, providerName }
 }
 
+/**
+ * `location.reload()` resolves before the server has re-read the agent .md
+ * files, so the agent list briefly holds only the built-in agents. Polling
+ * until a non-empty editable list comes back avoids showing an empty picker.
+ *
+ * Returns [] on timeout; callers MUST keep their previous list in that case,
+ * otherwise the empty-list bug comes back.
+ */
+export async function waitForEditableAgents(
+  listAgents: () => any[],
+  fileIds: () => Promise<AgentFileListing>,
+  options: { timeoutMs?: number; intervalMs?: number; sleep?: (ms: number) => Promise<void> } = {},
+): Promise<any[]> {
+  const timeoutMs = options.timeoutMs ?? 5000
+  const intervalMs = options.intervalMs ?? 150
+  const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)))
+  const deadline = Date.now() + timeoutMs
+  for (;;) {
+    const listing = await fileIds()
+    if (listing.ok) {
+      const list = filterEditableAgents(listAgents(), listing.ids)
+      if (list.length > 0) return list
+    }
+    if (Date.now() >= deadline) return []
+    await sleep(intervalMs)
+  }
+}
+
 export function agentFilePath(agentsDir: string, agentId: string): string {
   const clean = agentId.replace(/[^a-zA-Z0-9._-]/g, "")
   if (!clean || clean !== agentId) throw new Error(`invalid agent id: ${agentId}`)

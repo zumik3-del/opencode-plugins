@@ -9,6 +9,7 @@ import {
   listAgentFiles,
   readFileText,
   setModelLine,
+  waitForEditableAgents,
   writeFileText,
 } from "./data"
 
@@ -115,12 +116,16 @@ export default Plugin.define({
             variant: "success",
           })
 
-          // Refresh so the next agent list reflects the new model.
+          // Refresh so the next agent list reflects the new model. The reload
+          // resolves before the server re-reads the agent files, so poll
+          // instead of reading once; on timeout keep the previous list so the
+          // picker is never rendered empty.
           await syncData()
-          const refreshed = await listAgentFiles(context.client, dir)
-          if (refreshed.ok) {
-            agents = filterEditableAgents(context.data.location.agent.list() ?? [], refreshed.ids)
-          }
+          const refreshed = await waitForEditableAgents(
+            () => context.data.location.agent.list() ?? [],
+            () => listAgentFiles(context.client, dir),
+          )
+          if (refreshed.length > 0) agents = refreshed
         }
       } catch (error) {
         context.ui.toast.show({
