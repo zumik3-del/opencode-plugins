@@ -1,3 +1,8 @@
+// NOTE: @opencode/client's published type for FileWriteInput declares
+// `path: { path: string }`, but the server actually expects a flat string.
+// Keep this call as `{ path, payload }` even though it looks "wrong" by the types.
+// (Reported against sst/opencode; do not "fix" it back to the nested shape.)
+
 export interface AgentSummary {
   id: string
   name: string
@@ -18,7 +23,23 @@ export async function readFileText(client: any, path: string): Promise<string> {
 
 export async function writeFileText(client: any, path: string, content: string): Promise<void> {
   const payload = new TextEncoder().encode(content)
-  await client.file.write({ path: { path }, payload })
+  await client.file.write({ path, payload })
+}
+
+export async function listAgentFiles(client: any, agentsDir: string): Promise<Set<string>> {
+  try {
+    const result = await client.file.list({ path: agentsDir })
+    const entries = Array.isArray(result?.data) ? result.data : []
+    const ids = new Set<string>()
+    for (const entry of entries) {
+      const name = String(entry?.path ?? "").split("/").pop() ?? ""
+      const match = name.match(/^(.+)\.md$/)
+      if (match) ids.add(match[1])
+    }
+    return ids
+  } catch {
+    return new Set()
+  }
 }
 
 export function setModelLine(content: string, model: string): string {
@@ -28,9 +49,18 @@ export function setModelLine(content: string, model: string): string {
   const body = content.slice(match[0].length)
   const lines = head.split("\n")
   const idx = lines.findIndex((line) => /^model:/.test(line))
-  const newLine = `model: ${model}`
-  if (idx >= 0) lines[idx] = newLine
-  else lines.push(newLine)
+  if (idx >= 0) {
+    // Replace only the value token, preserving any trailing comment (e.g. "# reason").
+    const line = lines[idx]
+    const valueMatch = line.match(/^model:(\s*)(\S+)(.*)$/)
+    if (valueMatch) {
+      lines[idx] = `model:${valueMatch[1]}${model}${valueMatch[3]}`
+    } else {
+      lines[idx] = `model: ${model}`
+    }
+  } else {
+    lines.push(`model: ${model}`)
+  }
   return `---\n${lines.join("\n")}\n---\n${body}`
 }
 

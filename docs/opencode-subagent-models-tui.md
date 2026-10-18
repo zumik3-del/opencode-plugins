@@ -43,13 +43,13 @@ Plugin options in `cli.json`:
   "plugins": [
     {
       "package": "/absolute/path/to/opencode-plugins/tui/opencode-subagent-models-tui",
-      "options": { "agentsDir": "/home/opencode/.config/opencode/agents" }
+      "options": { "agentsDir": "/path/to/opencode/agents" }
     }
   ]
 }
 ```
 
-The directory can also be changed at runtime with `Subagent models: agents directory`. Priority: plugin option -> durable store -> default `/home/opencode/.config/opencode/agents`.
+There is no built-in default: `agentsDir` must be configured before use. The directory can also be changed at runtime with `Subagent models: agents directory`. Priority: plugin option -> durable store.
 
 ## Keys and commands
 

@@ -4,6 +4,7 @@ import { DEFAULT_SETTINGS, agentsDirFromOptions, type SubagentModelsSettings } f
 import {
   agentFilePath,
   agentModelString,
+  listAgentFiles,
   readFileText,
   setModelLine,
   writeFileText,
@@ -17,7 +18,7 @@ export default Plugin.define({
     })
 
     const agentsDir = () =>
-      agentsDirFromOptions(context.options) ?? settings.agentsDir ?? DEFAULT_SETTINGS.agentsDir
+      agentsDirFromOptions(context.options) ?? settings.agentsDir
 
     const [busy, setBusy] = createSignal(false)
 
@@ -31,14 +32,28 @@ export default Plugin.define({
       if (busy()) return
       setBusy(true)
       try {
+        const dir = agentsDir()
+        if (!dir) {
+          await openSettings()
+          return
+        }
+
         await syncData()
+
+        const editableFiles = await listAgentFiles(context.client, dir)
 
         const agents = (context.data.location.agent.list() ?? [])
           .filter((agent: any) => agent.mode === "subagent" && !agent.hidden)
+          .filter((agent: any) => editableFiles.size === 0 || editableFiles.has(agent.id))
           .sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)))
 
         if (agents.length === 0) {
-          await context.ui.dialog.alert({ title: "Subagent models", message: "No subagents found" })
+          await context.ui.dialog.alert({
+            title: "Subagent models",
+            message: editableFiles.size === 0
+              ? "Could not read the agents directory. Check 'Subagent models: agents directory'."
+              : "No editable subagents found (built-in agents have no file).",
+          })
           return
         }
 
@@ -84,7 +99,7 @@ export default Plugin.define({
         })
         if (selectedModel === undefined) return
 
-        const path = agentFilePath(agentsDir(), agent.id)
+        const path = agentFilePath(dir, agent.id)
         const content = await readFileText(context.client, path)
         const updated = setModelLine(content, selectedModel)
         await writeFileText(context.client, path, updated)
