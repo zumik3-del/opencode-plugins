@@ -49,7 +49,7 @@ export default Plugin.define({
           return
         }
 
-        const agents = (context.data.location.agent.list() ?? [])
+        let agents = (context.data.location.agent.list() ?? [])
           .filter((agent: any) => agent.mode === "subagent" && !agent.hidden)
           .filter((agent: any) => listing.ids.has(agent.id))
           .sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)))
@@ -61,19 +61,6 @@ export default Plugin.define({
           })
           return
         }
-
-        const selectedAgentId = await context.ui.dialog.select<string>({
-          title: "Subagent models: choose agent",
-          options: agents.map((agent: any) => ({
-            title: agent.name || agent.id,
-            value: agent.id,
-            description: `${agentModelString(agent)}${agent.description ? " — " + agent.description : ""}`,
-          })),
-        })
-        if (selectedAgentId === undefined) return
-
-        const agent = agents.find((item: any) => item.id === selectedAgentId)
-        if (!agent) return
 
         const providers = context.data.location.provider.list() ?? []
         const providerName = new Map(providers.map((provider: any) => [provider.id, provider.name || provider.id]))
@@ -92,35 +79,60 @@ export default Plugin.define({
           return
         }
 
-        const selectedModel = await context.ui.dialog.select<string>({
-          title: `Subagent models: choose model for ${agent.id}`,
-          options: models.map((model: any) => ({
-            title: model.name || model.id,
-            value: `${model.providerID}/${model.id}`,
-            description: `${model.id} · ctx ${model.limit?.context ?? "?"}`,
-            category: String(providerName.get(model.providerID) || model.providerID),
-          })),
-          current: agentModelString(agent) === "(default)" ? undefined : agentModelString(agent),
-        })
-        if (selectedModel === undefined) return
+        while (true) {
+          const selectedAgentId = await context.ui.dialog.select<string>({
+            title: "Subagent models: choose agent",
+            options: agents.map((agent: any) => ({
+              title: agent.name || agent.id,
+              value: agent.id,
+              description: `${agentModelString(agent)}${agent.description ? " — " + agent.description : ""}`,
+            })),
+          })
+          if (selectedAgentId === undefined) break
 
-        const path = agentFilePath(dir, agent.id)
-        const content = await readFileText(context.client, path)
-        const updated = setModelLine(content, selectedModel)
-        await writeFileText(context.client, path, updated)
+          const agent = agents.find((item: any) => item.id === selectedAgentId)
+          if (!agent) continue
 
-        context.data.location.agent.invalidate()
-        try {
-          await context.client.location.reload()
-        } catch {
-          // Hot reload is best-effort; the file is already updated on the server.
+          const selectedModel = await context.ui.dialog.select<string>({
+            title: `Subagent models: choose model for ${agent.id}`,
+            options: models.map((model: any) => ({
+              title: model.name || model.id,
+              value: `${model.providerID}/${model.id}`,
+              description: `${model.id} · ctx ${model.limit?.context ?? "?"}`,
+              category: String(providerName.get(model.providerID) || model.providerID),
+            })),
+            current: agentModelString(agent) === "(default)" ? undefined : agentModelString(agent),
+          })
+          if (selectedModel === undefined) continue
+
+          const path = agentFilePath(dir, agent.id)
+          const content = await readFileText(context.client, path)
+          const updated = setModelLine(content, selectedModel)
+          await writeFileText(context.client, path, updated)
+
+          context.data.location.agent.invalidate()
+          try {
+            await context.client.location.reload()
+          } catch {
+            // Hot reload is best-effort; the file is already updated on the server.
+          }
+
+          context.ui.toast.show({
+            title: "Subagent models",
+            message: `${agent.id}: ${agentModelString(agent)} -> ${selectedModel}. Restart opencode if it is not reflected.`,
+            variant: "success",
+          })
+
+          // Refresh so the next agent list reflects the new model.
+          await syncData()
+          const refreshed = await listAgentFiles(context.client, dir)
+          if (refreshed.ok) {
+            agents = (context.data.location.agent.list() ?? [])
+              .filter((item: any) => item.mode === "subagent" && !item.hidden)
+              .filter((item: any) => refreshed.ids.has(item.id))
+              .sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)))
+          }
         }
-
-        context.ui.toast.show({
-          title: "Subagent models",
-          message: `${agent.id}: ${agentModelString(agent)} -> ${selectedModel}. Restart opencode if it is not reflected.`,
-          variant: "success",
-        })
       } catch (error) {
         context.ui.toast.show({
           title: "Subagent models",
